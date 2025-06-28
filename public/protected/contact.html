@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us - MyShop</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      color: rgb(248, 248, 248);
+    }
+
+    #animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+      background-size: 800% 800%;
+      animation: gradientFlow 16s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 py-10 relative">
+
+  <!-- Background Animation -->
+  <div id="animated-bg"></div>
+
+  <!-- Contact Form -->
+  <div class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-2xl p-8 w-full max-w-2xl z-10">
+    <h2 class="text-3xl font-bold text-center text-white mb-8">Contact Us</h2>
+
+    <form id="contactForm" class="space-y-6">
+      <div>
+        <label class="block mb-2 font-medium">Full Name</label>
+        <input type="text" id="name" required placeholder="Your name"
+          class="w-full rounded-xl border border-white/20 bg-transparent h-12 px-4 placeholder-[#e0e8ff] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] text-white" />
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Email</label>
+        <input type="email" id="email" required placeholder="you@example.com"
+          class="w-full rounded-xl border border-white/20 bg-transparent h-12 px-4 placeholder-[#e0e8ff] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] text-white" />
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Phone Number</label>
+        <input type="text" id="phone" required placeholder="Enter your phone number"
+          inputmode="numeric" maxlength="15"
+          oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          class="w-full rounded-xl border border-white/20 bg-transparent h-12 px-4 placeholder-[#e0e8ff] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] text-white" />
+        <p class="text-sm text-[#d1d5db] mt-1">* Numbers only</p>
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Subject</label>
+        <input type="text" id="subject" required placeholder="Subject"
+          class="w-full rounded-xl border border-white/20 bg-transparent h-12 px-4 placeholder-[#e0e8ff] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] text-white" />
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Message</label>
+        <textarea id="message" rows="4" required placeholder="Your message"
+          class="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 placeholder-[#e0e8ff] focus:outline-none focus:ring-2 focus:ring-[#a78bfa] text-white"></textarea>
+      </div>
+
+      <button type="submit"
+        class="w-full h-12 rounded-xl bg-[#a78bfa] hover:bg-[#7c3aed] text-white font-semibold text-sm transition shadow-md">
+        Submit Inquiry
+      </button>
+    </form>
+  </div>
+
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script>
+    function showToast(msg, success = true) {
+      Toastify({
+        text: msg,
+        duration: 4000,
+        gravity: "top",
+        position: "center",
+        backgroundColor: success ? "#a78bfa" : "#ef4444",
+        stopOnFocus: true,
+        close: true
+      }).showToast();
+    }
+
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const subject = document.getElementById("subject").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      if (!name || !email || !phone || !subject || !message) {
+        showToast("Please fill out all fields.", false);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, phone, subject, message }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showToast(data.message || "Inquiry submitted!");
+          document.getElementById("contactForm").reset();
+          setTimeout(() => {
+            window.location.href = "/protected/home.html";
+          }, 2000);
+        } else {
+          showToast(data.message || "Submission failed", false);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Something went wrong. Please try again.", false);
+      }
+    });
+  </script>
+</body>
+</html>

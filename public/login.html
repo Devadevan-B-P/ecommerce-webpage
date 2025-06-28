@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      #animated-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+        background-size: 800% 800%;
+        animation: gradientFlow 15s ease infinite;
+        z-index: -1;
+      }
+      @keyframes gradientFlow {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen flex items-center justify-center px-4">
+    <div id="animated-bg"></div>
+
+    <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-xl p-8 w-full max-w-sm text-white">
+      <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+
+      <form id="loginForm" class="space-y-5">
+        <div>
+          <label class="block mb-2 text-base font-medium text-white">Email</label>
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="Email"
+            class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-14 p-[15px] text-base text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none"
+          />
+        </div>
+
+        <div class="relative">
+          <label class="block mb-2 text-base font-medium text-white">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Password"
+            class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-14 p-[15px] pr-16 text-base text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none"
+          />
+          <button
+            type="button"
+            id="togglePassword"
+            class="absolute right-4 bottom-4 text-sm text-[#c0cbd9] hover:underline"
+          >
+            Show
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full h-12 rounded-xl bg-[#a78bfa] hover:bg-[#7c3aed] text-white font-bold text-sm tracking-wide transition"
+        >
+          Login
+        </button>
+      </form>
+
+      <a href="/signup.html" class="block text-center text-sm text-[#c0cbd9] mt-5 hover:underline">
+        Don't have an account? Sign up
+      </a>
+    </div>
+
+    <script>
+      // Toggle Password Visibility
+      const togglePassword = document.getElementById("togglePassword");
+      const passwordInput = document.getElementById("password");
+      togglePassword.addEventListener("click", () => {
+        const isText = passwordInput.type === "text";
+        passwordInput.type = isText ? "password" : "text";
+        togglePassword.textContent = isText ? "Show" : "Hide";
+      });
+
+      // Toast function
+      function showToast(message, isSuccess = true) {
+        Toastify({
+          text: message,
+          duration: 4000,
+          gravity: "top",
+          position: "centre",
+          backgroundColor: isSuccess ? "#a78bfa" : "#ef4444",
+          close: true,
+        }).showToast();
+      }
+
+      // Login handler
+      document.getElementById("loginForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+
+          if (res.ok) {
+            showToast("Login successful!");
+            setTimeout(() => {
+              if (result.isAdmin) {
+                window.location.href = "/protected/admin.html";
+              } else {
+                window.location.href = "/protected/home.html";
+              }
+            }, 1500);
+          } else {
+            showToast(result.message || "Login failed", false);
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Something went wrong. Please try again.", false);
+        }
+      };
+    </script>
+  </body>
+</html>

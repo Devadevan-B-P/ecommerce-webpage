@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home - MyShop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    #animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+      background-size: 800% 800%;
+      animation: gradientFlow 18s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fadeZoomIn {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .fadeZoomIn-btn {
+      animation: fadeZoomIn 0.5s ease forwards;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+<body class="text-white relative min-h-screen px-4 py-10">
+
+  <!-- Animated Background -->
+  <div id="animated-bg"></div>
+
+  <!-- Header -->
+  <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-6 py-4 max-w-7xl mx-auto mb-8 shadow-xl flex justify-between items-center">
+    <div class="font-bold text-lg text-white">MyShop</div>
+    <div class="flex items-center gap-4">
+  <div id="userAvatar" class="bg-[#a78bfa] text-white rounded-full w-10 h-10 flex items-center justify-center font-semibold uppercase"></div>
+  <button onclick="logoutUser()" class="text-sm text-white hover:underline">Logout</button>
+</div>
+
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto z-10 relative">
+    <h2 class="text-3xl font-bold text-center mb-10">Products</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 product-grid">
+      <!-- Skeletons will be here initially -->
+      ${[...Array(6)].map(() => `
+        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-5 space-y-4 animate-pulse">
+          <div class="w-full h-60 rounded-md skeleton"></div>
+          <div class="w-3/4 h-4 rounded skeleton"></div>
+          <div class="w-1/2 h-4 rounded skeleton"></div>
+          <div class="w-full h-8 rounded skeleton mt-4"></div>
+        </div>
+      `).join('')}
+    </div>
+
+    <h2 class="text-3xl font-bold text-center mt-20 mb-4">Contact Us</h2>
+    <div class="flex justify-center">
+      <a href="contact.html" class="bg-[#a78bfa] hover:bg-[#7c3aed] hover:shadow-[0_0_10px_#a78bfa88] text-white px-6 py-3 rounded-md font-medium shadow-md transition">Contact</a>
+    </div>
+  </div>
+
+<script>
+  // Show avatar initials and load products
+  async function updateWelcome() {
+    try {
+      const res = await fetch('/api/user-info', { credentials: 'include' });
+      const data = await res.json();
+      const avatarDiv = document.getElementById('userAvatar');
+
+      if (data.name) {
+        const initials = data.name
+          .split(' ')
+          .map(word => word[0])
+          .join('')
+          .toUpperCase();
+        avatarDiv.textContent = initials;
+      } else {
+        avatarDiv.textContent = '?';
+      }
+    } catch (err) {
+      console.error('Error fetching user info:', err);
+    }
+  }
+
+  // Logout function
+  function logoutUser() {
+    fetch('/api/auth/logout', {
+      method: 'GET',
+      credentials: 'include'
+    }).then(() => {
+      window.location.href = '/login.html';
+    }).catch(err => {
+      console.error('Logout failed:', err);
+    });
+  }
+
+  // Load products
+  async function loadProducts() {
+    const res = await fetch('/api/products');
+    const products = await res.json();
+
+    const grid = document.querySelector('.product-grid');
+    grid.innerHTML = ''; // Remove skeletons
+
+    products.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = `
+        bg-white/10 backdrop-blur-md border border-white/20 
+        rounded-2xl shadow-xl overflow-hidden transition 
+        duration-300 hover:scale-105 cursor-pointer
+      `;
+
+      card.innerHTML = `
+        <img src="${p.image}" alt="${p.name}" class="w-full h-60 object-cover"/>
+        <div class="p-5 flex flex-col justify-between">
+          <h3 class="text-lg font-semibold text-white mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">${p.name}</h3>
+          <p class="text-lg font-semibold text-white mb-2">${p.price}</p>
+          <p class="text-sm text-[#e0e8ff] flex-grow mb-4">${p.description}</p>
+          <button onclick='viewProduct(${JSON.stringify(p)})'
+            class="bg-[#a78bfa] hover:bg-[#7c3aed] hover:shadow-[0_0_12px_#c084fcaa] text-white py-2 rounded-md text-sm font-medium shadow-md transition fadeZoomIn-btn">
+            View Details
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // View product
+  function viewProduct(product) {
+    const updatedProduct = { ...product, id: product._id };
+    localStorage.setItem('selectedProduct', JSON.stringify(updatedProduct));
+    window.location.href = 'product.html';
+  }
+
+  // On load
+  window.addEventListener('DOMContentLoaded', () => {
+    const grid = document.querySelector('.product-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const skeleton = document.createElement('div');
+      skeleton.className = `bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-5 space-y-4 animate-pulse`;
+      skeleton.innerHTML = `
+        <div class="w-full h-60 rounded-md skeleton"></div>
+        <div class="w-3/4 h-4 rounded skeleton"></div>
+        <div class="w-1/2 h-4 rounded skeleton"></div>
+        <div class="w-full h-8 rounded skeleton mt-4"></div>
+      `;
+      grid.appendChild(skeleton);
+    }
+    updateWelcome();
+    setTimeout(loadProducts, 1200);
+  });
+</script>
+
+
+</body>
+</html>

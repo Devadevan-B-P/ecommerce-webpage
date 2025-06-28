@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Choose Payment Method</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+      background-size: 800% 800%;
+      animation: gradientFlow 20s ease infinite;
+      min-height: 100vh;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .payment-details {
+      transition: all 0.3s ease-in-out;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="text-white flex items-center justify-center px-4 py-10">
+
+  <div class="glass p-8 rounded-2xl max-w-xl w-full shadow-xl">
+    <h2 class="text-3xl font-bold text-center mb-6">Choose Payment Method</h2>
+
+    <div class="space-y-4">
+
+      <div class="payment-option p-4 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer" onclick="selectPayment('card')">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="radio" name="payment" value="card" class="accent-[#a78bfa]" />
+          Credit / Debit Card
+        </label>
+      </div>
+      <div id="card-details" class="payment-details hidden ml-4 space-y-3">
+        <input id="card-number" placeholder="Card Number" maxlength="19"
+          class="w-full rounded-md bg-white/10 px-3 py-2 text-white placeholder-white/70 focus:outline-none" />
+        <div class="flex gap-3">
+          <input id="valid-thru" placeholder="MM/YY" maxlength="5"
+            class="w-1/2 rounded-md bg-white/10 px-3 py-2 text-white placeholder-white/70 focus:outline-none" />
+          <input id="cvv" placeholder="CVV" maxlength="4"
+            class="w-1/2 rounded-md bg-white/10 px-3 py-2 text-white placeholder-white/70 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="payment-option p-4 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer" onclick="selectPayment('upi')">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="radio" name="payment" value="upi" class="accent-[#a78bfa]" />
+          UPI
+        </label>
+      </div>
+      <div id="upi-details" class="payment-details hidden ml-4">
+        <input id="upi-id" placeholder="you@upi" class="w-full rounded-md bg-white/10 px-3 py-2 text-white placeholder-white/70 focus:outline-none" />
+      </div>
+
+      <div class="payment-option p-4 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer" onclick="selectPayment('netbanking')">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="radio" name="payment" value="netbanking" class="accent-[#a78bfa]" />
+          Net Banking
+        </label>
+      </div>
+      <div id="netbanking-details" class="payment-details hidden ml-4">
+        <select id="bank-name"
+  class="w-full rounded-md bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-[#c084fc] border border-white/30 px-3 py-2 appearance-none">
+  <option class="text-black" value="">Select Bank</option>
+  <option class="text-black" value="sbi">State Bank of India</option>
+  <option class="text-black" value="hdfc">HDFC Bank</option>
+  <option class="text-black" value="icici">ICICI Bank</option>
+  <option class="text-black" value="axis">Axis Bank</option>
+</select>
+
+      </div>
+
+      <div class="payment-option p-4 rounded-xl bg-white/10 hover:bg-white/20 cursor-pointer" onclick="selectPayment('cod')">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="radio" name="payment" value="cod" class="accent-[#a78bfa]" />
+          Cash on Delivery
+        </label>
+      </div>
+
+    </div>
+
+    <p id="selected-payment" class="text-sm mt-4 text-center text-white/80"></p>
+
+    <button onclick="proceedPayment()"
+      class="w-full bg-[#a78bfa] hover:bg-[#7c3aed] transition mt-6 py-2 rounded-lg font-medium shadow-md">
+      Proceed
+    </button>
+  </div>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+  let selectedMethod = '';
+
+  function selectPayment(method) {
+    document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('border-2', 'border-white'));
+    document.querySelectorAll('.payment-details').forEach(detail => detail.classList.add('hidden'));
+
+    const current = document.querySelector(`input[value="${method}"]`);
+    if (current) {
+      current.checked = true;
+      current.closest('.payment-option').classList.add('border-2', 'border-white');
+    }
+
+    const details = document.getElementById(`${method}-details`);
+    if (details) details.classList.remove('hidden');
+
+    selectedMethod = method;
+    const label = {
+      card: "Credit/Debit Card",
+      upi: "UPI",
+      netbanking: "Net Banking",
+      cod: "Cash on Delivery"
+    };
+    document.getElementById("selected-payment").textContent = label[method] + " selected";
+  }
+
+  function showToast(msg, isSuccess = true) {
+    Toastify({
+      text: msg,
+      duration: 4000,
+      gravity: "top",
+      position: "center",
+      backgroundColor: isSuccess ? "#a78bfa" : "#ef4444",
+      close: true
+    }).showToast();
+  }
+
+  function proceedPayment() {
+    if (!selectedMethod) return showToast("Please select a payment method", false);
+
+    // Validate fields
+    if (selectedMethod === 'card') {
+      const cardNumber = document.getElementById('card-number').value.trim();
+      const validThru = document.getElementById('valid-thru').value.trim();
+      const cvv = document.getElementById('cvv').value.trim();
+
+      if (!cardNumber || !validThru || !cvv) return showToast("Please fill in all card details", false);
+      if (cardNumber.replace(/\s/g, '').length < 13) return showToast("Invalid card number", false);
+      if (!/^\d{2}\/\d{2}$/.test(validThru)) return showToast("Invalid expiry (MM/YY)", false);
+      if (cvv.length < 3) return showToast("Invalid CVV", false);
+
+      localStorage.setItem('cardNumber', cardNumber);
+      localStorage.setItem('cvv', cvv);
+    }
+
+    if (selectedMethod === 'upi') {
+      const upiId = document.getElementById('upi-id').value.trim();
+      if (!upiId.includes("@")) return showToast("Invalid UPI ID", false);
+      localStorage.setItem('upiId', upiId);
+    }
+
+    if (selectedMethod === 'netbanking') {
+      const bankName = document.getElementById('bank-name').value;
+      if (!bankName) return showToast("Please select your bank", false);
+      localStorage.setItem('bankName', bankName);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get("id");
+
+    if (!productId) {
+      showToast("Missing product ID", false);
+      return setTimeout(() => window.location.href = "home.html", 2000);
+    }
+
+    showToast("Payment successful", true);
+    setTimeout(() => {
+      window.location.href = `review page.html?id=${productId}&payment=${selectedMethod}`;
+    }, 1500);
+  }
+
+  // Formatting helpers
+  document.getElementById('card-number').addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+  });
+
+  document.getElementById('valid-thru').addEventListener('input', e => {
+    let v = e.target.value.replace(/\D/g, '');
+    if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
+    e.target.value = v;
+  });
+
+  document.getElementById('cvv').addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '');
+  });
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Confirmation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #0f0f14;
+      color: white;
+      overflow: hidden;
+    }
+
+    #animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+      background-size: 800% 800%;
+      animation: gradientFlow 15s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .confirmation-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      padding: 2rem;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .product-info p {
+      margin: 0.75rem 0;
+      font-size: 1rem;
+      color: #e0e8ff;
+    }
+
+    .go-back {
+      display: inline-block;
+      margin-top: 1.5rem;
+      background-color: #a78bfa;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .go-back:hover {
+      background-color: #7c3aed;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #ffffff1a 25%, #ffffff33 50%, #ffffff1a 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite linear;
+      border-radius: 6px;
+      height: 1rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen px-4">
+
+  <div id="animated-bg"></div>
+
+  <div class="confirmation-box">
+    <h2 class="text-xl font-semibold text-white mb-4">✅ Order Successfully Placed</h2>
+
+    <div class="product-info">
+      <p><strong>Order ID:</strong> <span id="orderId" class="skeleton inline-block w-32"></span></p>
+      <p><strong>Product ID:</strong> <span id="productId" class="skeleton inline-block w-32"></span></p>
+      <p><strong>Payment Method:</strong> <span id="paymentMethod" class="skeleton inline-block w-28"></span></p>
+    </div>
+
+    <a href="home.html" class="go-back">← Go Back</a>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+  const orderIdSpan = document.getElementById('orderId');
+  const productIdSpan = document.getElementById('productId'); // This will now show the name
+  const paymentMethodSpan = document.getElementById('paymentMethod');
+
+  function showToast(msg, success = true) {
+    Toastify({
+      text: msg,
+      duration: 3000,
+      gravity: "top",
+      position: "center",
+      backgroundColor: success ? "#a78bfa" : "#ef4444",
+      close: true,
+    }).showToast();
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    const paymentMethod = urlParams.get('payment');
+
+    if (!productId || !paymentMethod) {
+      document.querySelector('.product-info').innerHTML =
+        '<p style="color:#ff7070">❌ Missing product ID or payment method in URL.</p>';
+      showToast("Missing product or payment info", false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          productId,
+          paymentMode: paymentMethod,
+          cardNumber: localStorage.getItem('cardNumber') || null,
+          cvv: localStorage.getItem('cvv') || null,
+          upiId: localStorage.getItem('upiId') || null,
+          bankName: localStorage.getItem('bankName') || null
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Order failed");
+
+      orderIdSpan.classList.remove('skeleton');
+      productIdSpan.classList.remove('skeleton');
+      paymentMethodSpan.classList.remove('skeleton');
+
+      orderIdSpan.textContent = data.orderId;
+      productIdSpan.textContent = data.productName; // ✅ show name instead of ID
+      paymentMethodSpan.textContent = paymentMethod.toUpperCase();
+
+      showToast("Order placed successfully!");
+    } catch (err) {
+      console.error('❌ Order failed:', err);
+      document.querySelector('.product-info').innerHTML =
+        '<p style="color:#ff7070">❌ Order could not be placed. Please log in first.</p>';
+      showToast("Failed to place order. Login first.", false);
+    }
+  });
+</script>
+
+
+</body>
+</html>

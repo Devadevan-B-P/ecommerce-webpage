@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #animated-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+        background-size: 800% 800%;
+        animation: gradientFlow 15s ease infinite;
+        z-index: -1;
+      }
+
+      @keyframes gradientFlow {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex items-center justify-center px-4">
+    <div id="animated-bg"></div>
+
+    <div class="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-xl p-8 w-full max-w-sm text-white">
+      <h2 class="text-2xl font-bold mb-6 text-center">Sign up</h2>
+      <form id="signupForm" class="space-y-5">
+        <div>
+  <label class="block mb-2 text-base font-medium text-white">Name</label>
+  <input
+    type="text"
+    name="name"
+    required
+    placeholder="Your Name"
+    class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-14 p-[15px] text-base text-white placeholder-[#e0dfff] focus:border-[#a78bfa] focus:outline-none"
+  />
+</div>
+
+        <div>
+          <label class="block mb-2 text-base font-medium text-white">Email</label>
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="Email"
+            class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-14 p-[15px] text-base text-white placeholder-[#e0dfff] focus:border-[#a78bfa] focus:outline-none"
+          />
+        </div>
+
+        <div class="relative">
+          <label class="block mb-2 text-base font-medium text-white">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Password"
+            class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-14 p-[15px] pr-16 text-base text-white placeholder-[#e0dfff] focus:border-[#a78bfa] focus:outline-none"
+          />
+          <button
+            type="button"
+            id="togglePassword"
+            class="absolute right-4 bottom-4 text-sm text-[#e0dfff] hover:underline"
+          >
+            Show
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          id="signupBtn"
+          class="w-full h-12 rounded-xl bg-[#a78bfa] text-white font-bold text-sm tracking-wide hover:bg-[#7c3aed] transition flex justify-center items-center"
+        >
+          <span id="btnText">Sign up</span>
+          <svg
+            id="spinner"
+            class="animate-spin ml-2 hidden h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            ></path>
+          </svg>
+        </button>
+      </form>
+
+      <a href="/login.html" class="block text-center text-sm text-[#e0dfff] mt-5 hover:underline">
+        Already have an account? Login
+      </a>
+    </div>
+
+    <script>
+      // Toggle Password
+      const toggleBtn = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+      toggleBtn.addEventListener('click', () => {
+        const type = passwordInput.type === 'text' ? 'password' : 'text';
+        passwordInput.type = type;
+        toggleBtn.textContent = type === 'password' ? 'Show' : 'Hide';
+      });
+
+      // Toast Function
+      function showToast(message, success = true) {
+        Toastify({
+          text: message,
+          duration: 3500,
+          gravity: "top",
+          position: "center",
+          style: {
+            background: success ? "#a78bfa" : "#ef4444",
+            color: "#fff",
+            borderRadius: "6px",
+            padding: "12px 18px",
+          }
+        }).showToast();
+      }
+
+      // Submit Handler
+      document.getElementById('signupForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        const signupBtn = document.getElementById('signupBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+
+        btnText.textContent = "Signing up...";
+        spinner.classList.remove('hidden');
+        signupBtn.disabled = true;
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          const res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          const result = await res.json();
+
+          if (res.ok) {
+            showToast("Signup successful!");
+            setTimeout(() => {
+              window.location.href = '/login.html';
+            }, 2000);
+          } else {
+            showToast(result.message || 'Signup failed', false);
+          }
+        } catch (err) {
+          showToast("Something went wrong. Please try again.", false);
+        } finally {
+          btnText.textContent = "Sign up";
+          spinner.classList.add('hidden');
+          signupBtn.disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>

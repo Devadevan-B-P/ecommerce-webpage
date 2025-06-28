@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload Product</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    #animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(270deg, #c084fc, #a78bfa, #7c3aed, #6b21a8);
+      background-size: 800% 800%;
+      animation: gradientFlow 15s ease infinite;
+      z-index: -1;
+    }
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body class="min-h-screen px-4 py-6 text-white">
+  <div id="animated-bg"></div>
+
+  <!-- Upload Form -->
+  <div class="max-w-lg mx-auto backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-xl p-8">
+    <h2 class="text-2xl font-bold mb-6 text-center">Add New Product</h2>
+    <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
+      <div>
+        <label class="block mb-1 text-sm font-medium">Product Name</label>
+        <input type="text" name="name" required placeholder="Product Name"
+          class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-12 p-[12px] text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none" />
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-medium">Price</label>
+        <input type="text" name="price" required placeholder="Price"
+          class="form-input w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md h-12 p-[12px] text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none" />
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-medium">Short Description</label>
+        <textarea name="description" required rows="2" placeholder="Short Description"
+          class="form-textarea w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md p-[12px] text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-medium">Specifications</label>
+        <textarea name="specs" required rows="3" placeholder="Specifications"
+          class="form-textarea w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur-md p-[12px] text-white placeholder-[#c0cbd9] focus:border-[#a78bfa] focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block mb-1 text-sm font-medium">Product Image</label>
+        <input type="file" name="image" accept="image/*" required
+          class="block w-full text-sm text-[#c0cbd9] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#6b21a8] file:text-white hover:file:bg-[#7c3aed]" />
+      </div>
+      <button type="submit"
+        class="w-full h-12 rounded-xl bg-[#a78bfa] text-white font-bold text-sm tracking-wide hover:bg-[#7c3aed] transition">Upload
+        Product</button>
+    </form>
+  </div>
+
+  <!-- Product List -->
+  <div id="productList" class="mt-10 max-w-lg mx-auto space-y-4"></div>
+
+  <!-- Toastify -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script>
+    function showToast(msg, isSuccess = true) {
+      Toastify({
+        text: msg,
+        duration: 4000,
+        gravity: "top",
+        position: "center",
+        backgroundColor: isSuccess ? "#a78bfa" : "#ef4444",
+        close: true
+      }).showToast();
+    }
+
+    document.getElementById('uploadForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          showToast('✅ Product uploaded successfully');
+          document.getElementById('uploadForm').reset();
+          loadProducts();
+        } else {
+          showToast(result.message || '❌ Upload failed', false);
+        }
+      } catch (err) {
+        showToast('Something went wrong. Please try again.', false);
+      }
+    };
+
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+
+      const container = document.getElementById('productList');
+      container.innerHTML = '';
+
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl p-4 flex justify-between items-center gap-4';
+
+        div.innerHTML = `
+          <div class="flex items-center gap-4">
+            <img src="${p.image}" alt="${p.name}" class="w-16 h-16 object-cover rounded-lg border border-white/20" />
+            <div>
+              <p class="font-bold">${p.name}</p>
+              <p class="text-sm text-[#c0cbd9]">₹${p.price}</p>
+            </div>
+          </div>
+          <button onclick="confirmDeleteWithToast('${p._id}', '${p.image}')" class="text-sm bg-red-500 hover:bg-red-600 px-3 py-1 rounded-xl">
+            Delete
+          </button>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    async function deleteProduct(id, imageUrl) {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl })
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        showToast('🗑️ Product deleted');
+        loadProducts();
+      } else {
+        showToast(result.message || '❌ Failed to delete', false);
+      }
+    }
+
+    function confirmDeleteWithToast(id, imageUrl) {
+      const toast = Toastify({
+        text: "Are you sure?",
+        duration: -1,
+        gravity: "top",
+        position: "center",
+        close: false,
+        style: {
+          background: "#1f2937",
+          padding: "16px",
+          borderRadius: "12px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+        },
+        onClick: () => {}
+      });
+
+      toast.showToast();
+
+      const toastElem = toast.toastElement;
+      toastElem.innerHTML = `
+        <span style="margin-right: 8px;">Confirm delete?</span>
+        <div style="display: flex; gap: 8px;">
+          <button style="background:#ef4444;padding:6px 12px;border:none;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer;">Yes</button>
+          <button style="background:#6b7280;padding:6px 12px;border:none;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer;">No</button>
+        </div>
+      `;
+
+      const [yesBtn, noBtn] = toastElem.querySelectorAll("button");
+
+      yesBtn.onclick = () => {
+        toastElem.remove();
+        deleteProduct(id, imageUrl);
+      };
+
+      noBtn.onclick = () => {
+        toastElem.remove();
+      };
+    }
+
+    window.onload = loadProducts;
+  </script>
+</body>
+</html>
